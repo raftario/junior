@@ -1,0 +1,9 @@
+{
+	"extends": ["@tsconfig/node24/tsconfig.json", "@tsconfig/node-ts/tsconfig.json"],
+	"compilerOptions": {
+		"strict": true,
+		"noEmit": true,
+		"noImplicitOverride": true,
+		"noUncheckedIndexedAccess": true
+	}
+}
