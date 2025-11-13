@@ -9,7 +9,7 @@ const schema = z.object({
 	model: z.string(),
 
 	endpoint: z.url().optional(),
-	db: z.string().default(path.join(ROOT, "clyde.db")),
+	db: z.string().default(path.join(ROOT, "junior.db")),
 
 	messages: z.int().min(1).default(32),
 	cutoff: z.iso

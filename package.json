@@ -10,9 +10,7 @@
 	},
 	"dependencies": {
 		"@huggingface/jinja": "^0.5.1",
-		"@libsql/client": "^0.15.15",
 		"discord.js": "^14.24.2",
-		"drizzle-orm": "^0.44.7",
 		"openai": "^6.8.1",
 		"temporal-polyfill": "^0.3.0",
 		"yaml": "^2.8.1",
@@ -23,7 +21,6 @@
 		"@tsconfig/node-ts": "*",
 		"@tsconfig/node24": "*",
 		"@types/node": "^24.3.0",
-		"drizzle-kit": "^0.31.6",
 		"typescript": "~5.9.3"
 	},
 	"engines": {

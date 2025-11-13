@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS servers (
+    id TEXT PRIMARY KEY NOT NULL,
+    prompt TEXT
+);

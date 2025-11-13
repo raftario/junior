@@ -1,7 +1,9 @@
 import "temporal-polyfill/global"
+import "./commands/prompt.ts"
 
 import {
 	ChannelType,
+	Events,
 	type GuildMember,
 	type GuildTextBasedChannel,
 	type Message,
@@ -11,6 +13,7 @@ import {
 import yaml from "yaml"
 
 import { client } from "./client.ts"
+import { commands } from "./commands.ts"
 import { config } from "./config.ts"
 import { completion } from "./openai.ts"
 import { prompt } from "./prompt.ts"
@@ -108,7 +111,7 @@ async function reply(message: Message<true>, channel: GuildTextBasedChannel) {
 	const messages = await Array.fromAsync(context(message))
 	messages.reverse()
 
-	const summary = messages
+	const user = messages
 		.map((message) => {
 			const from = `${(message.member ?? message.author).displayName} (@${message.author.tag})`
 			const at = Temporal.Instant.fromEpochMilliseconds(message.createdTimestamp).toString()
@@ -120,23 +123,19 @@ async function reply(message: Message<true>, channel: GuildTextBasedChannel) {
 		.trim()
 
 	if (process.env.DEV) {
-		console.log(summary)
+		console.log(user)
 	}
 
+	const system = await prompt(channel)
 	const response = await typing(channel, () =>
 		completion([
 			{
 				role: "system",
-				content: prompt({
-					user: me.displayName,
-					tag: me.user.tag,
-					server: channel.guild.name,
-					channel: channel.name,
-				}),
+				content: system,
 			},
 			{
 				role: "user",
-				content: summary,
+				content: user,
 			},
 		]),
 	)
@@ -168,6 +167,7 @@ async function handler(message: Message) {
 	return await reply(message, channel)
 }
 
-client.on("messageCreate", async (message) => {
+await commands.register(client)
+client.on(Events.MessageCreate, async (message) => {
 	handler(message).catch(console.error)
 })

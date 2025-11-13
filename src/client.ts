@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits } from "discord.js"
+import { Client, Events, GatewayIntentBits } from "discord.js"
 
 import { config } from "./config.ts"
 
@@ -12,14 +12,17 @@ const pending = new Client({
 })
 pending.login(config.token)
 
-const ready = new Promise<Client<true>>((resolve, reject) =>
+const ready = new Promise<Client<true>>((resolve, reject) => {
+	const onError = (error: Error) => {
+		reject(error)
+	}
+
 	pending
-		.on("clientReady", (client) => {
+		.once(Events.ClientReady, (client) => {
+			pending.removeListener(Events.Error, onError)
 			resolve(client)
 		})
-		.on("error", (error) => {
-			reject(error)
-		}),
-)
+		.addListener(Events.Error, onError)
+})
 
 export const client = await ready
