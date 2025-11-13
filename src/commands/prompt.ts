@@ -30,23 +30,12 @@ commands.add(
 		const input = new TextInputBuilder()
 			.setCustomId("prompt")
 			.setStyle(TextInputStyle.Paragraph)
-			.setRequired(true)
+			.setRequired(false)
 
 		const current = getPrompt(server.id)
 		if (current) {
 			input.setValue(current)
 		}
-
-		const modal = new ModalBuilder()
-			.setCustomId(id)
-			.setTitle("Custom Prompt")
-			.addLabelComponents(
-				new LabelBuilder()
-					.setLabel(`Prompt`)
-					.setDescription(`Custom system prompt for ${server.name}`)
-					.setTextInputComponent(input),
-			)
-		await interaction.showModal(modal)
 
 		const handler = (interaction: Interaction) => {
 			if (!interaction.isModalSubmit() || interaction.customId !== id) {
@@ -57,11 +46,33 @@ commands.add(
 			const prompt = interaction.fields.getTextInputValue("prompt")
 			setPrompt(server.id, prompt)
 
-			interaction.reply({
-				content: `The custom system prompt for ${server.name} has been updated.`,
-				flags: MessageFlags.Ephemeral,
-			})
+			interaction
+				.reply({
+					content: `The custom system prompt for ${server.name} has been updated.`,
+					flags: MessageFlags.Ephemeral,
+				})
+				.catch(console.error)
 		}
+		setTimeout(
+			() => {
+				if (interaction.replied) {
+					return
+				}
+				interaction.client.removeListener(Events.InteractionCreate, handler)
+			},
+			Temporal.Duration.from({ minutes: 4 }).total("milliseconds"),
+		)
 		interaction.client.addListener(Events.InteractionCreate, handler)
+
+		const modal = new ModalBuilder()
+			.setCustomId(id)
+			.setTitle("Prompting settings")
+			.addLabelComponents(
+				new LabelBuilder()
+					.setLabel(`Prompt`)
+					.setDescription(`Custom system prompt for ${server.name}`)
+					.setTextInputComponent(input),
+			)
+		await interaction.showModal(modal)
 	},
 )
