@@ -5,6 +5,7 @@ import {
 	type Interaction,
 	InteractionContextType,
 	LabelBuilder,
+	MessageFlags,
 	ModalBuilder,
 	PermissionFlagsBits,
 	SlashCommandBuilder,
@@ -41,7 +42,8 @@ commands.add(
 			.setTitle("Custom Prompt")
 			.addLabelComponents(
 				new LabelBuilder()
-					.setLabel(`Custom system prompt for ${server.name}`)
+					.setLabel(`Prompt`)
+					.setDescription(`Custom system prompt for ${server.name}`)
 					.setTextInputComponent(input),
 			)
 		await interaction.showModal(modal)
@@ -55,7 +57,10 @@ commands.add(
 			const prompt = interaction.fields.getTextInputValue("prompt")
 			setPrompt(server.id, prompt)
 
-			interaction.reply(`The custom system prompt for ${server.name} has been updated.`)
+			interaction.reply({
+				content: `The custom system prompt for ${server.name} has been updated.`,
+				flags: MessageFlags.Ephemeral,
+			})
 		}
 		interaction.client.addListener(Events.InteractionCreate, handler)
 	},
