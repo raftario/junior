@@ -2,6 +2,7 @@ import "temporal-polyfill/global"
 
 import {
 	ChannelType,
+	type GuildMember,
 	type GuildTextBasedChannel,
 	type Message,
 	MessageType,
@@ -16,6 +17,7 @@ import { prompt } from "./prompt.ts"
 
 const CTX: { last?: Snowflake } = {}
 
+// normalise string by removing accents and lowercasing
 function normalize(s: string): string {
 	return s
 		.normalize("NFKC")
@@ -23,6 +25,7 @@ function normalize(s: string): string {
 		.toLowerCase()
 }
 
+// type in a channel while performing an action
 async function typing<T>(channel: GuildTextBasedChannel, f: () => Promise<T>): Promise<T> {
 	const typing = setInterval(() => channel.sendTyping().catch(console.error), 1000)
 	try {
@@ -32,21 +35,33 @@ async function typing<T>(channel: GuildTextBasedChannel, f: () => Promise<T>): P
 	}
 }
 
+// hydrate message contents with mentions
 function hydrate(message: string, channel: GuildTextBasedChannel): string {
-	return message.replace(/@(?<tag>[a-z0-9_.]{2,32})/g, (mention) => {
-		const member = channel.guild.members.cache.find(
-			(member) => member.user.tag === mention.slice(1),
-		)
-		const id = member?.id
+	const longest = (name: (member: GuildMember) => string) =>
+		Array.from(
+			channel.guild.members.cache
+				.values()
+				.map((member) => ({ id: member.id, name: `@${name(member)}` })),
+		).sort((a, b) => b.name.length - a.name.length)
 
-		if (id) {
-			return `<@${id}>`
-		} else {
-			return mention
+	// build a list of usernames to match mentions against, with longer tags > shorter tags > longer display names > shorter display names
+	const members = [
+		...longest((member) => member.user.tag),
+		...longest((member) => member.displayName),
+	]
+
+	return message.replace(/@[^@]+/g, (mention) => {
+		for (const { name, id } of members) {
+			if (mention.startsWith(name)) {
+				return `<@${id}>${mention.slice(name.length)}`
+			}
 		}
+
+		return mention
 	})
 }
 
+// build the previous messages context by following threads of replies
 async function* context(
 	message: Message<true>,
 	count = 0,
@@ -66,7 +81,7 @@ async function* context(
 	}
 
 	const instant = Temporal.Instant.fromEpochMilliseconds(message.createdTimestamp)
-	const cutoff = instant.subtract({ hours: 4 })
+	const cutoff = instant.subtract(config.cutoff)
 
 	const previous = await message.channel.messages.fetch({
 		before: message.id,
@@ -114,7 +129,7 @@ async function reply(message: Message<true>, channel: GuildTextBasedChannel) {
 				role: "system",
 				content: prompt({
 					user: me.displayName,
-					tag: client.user.tag,
+					tag: me.user.tag,
 					server: channel.guild.name,
 					channel: channel.name,
 				}),

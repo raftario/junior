@@ -11,8 +11,13 @@ const schema = z.object({
 	endpoint: z.url().optional(),
 	db: z.string().default(path.join(ROOT, "clyde.db")),
 
-	messages: z.int().min(1).default(8),
-	max: z.int().min(1).optional(),
+	messages: z.int().min(1).default(32),
+	cutoff: z.iso
+		.duration()
+		.transform((duration) => Temporal.Duration.from(duration))
+		.default(Temporal.Duration.from({ hours: 4 })),
+
+	truncate: z.int().min(1).default(1024),
 })
 
 declare global {

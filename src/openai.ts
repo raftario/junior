@@ -16,7 +16,7 @@ export async function completion(
 		model: config.model,
 		messages,
 		tools: tools.descriptions,
-		max_completion_tokens: config.max,
+		max_completion_tokens: config.truncate,
 	})
 	const message = response.choices.at(0)!.message
 
